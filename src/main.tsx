@@ -8,10 +8,10 @@ import App from "./components/App/App";
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
-  <QueryClientProvider client={queryClient}>
-    <StrictMode>
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
       <App />
       <ReactQueryDevtools initialIsOpen={false} />
-    </StrictMode>
-  </QueryClientProvider>
+    </QueryClientProvider>
+  </StrictMode>
 );

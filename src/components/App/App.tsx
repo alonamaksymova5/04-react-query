@@ -1,52 +1,70 @@
-// import { useQuery } from "@tanstack/react-query";
-// import { useState } from "react";
-import "./App.css";
-// import { useQuery } from "@tanstack/react-query";
-// import axios from "axios";
-
-// const fetchPerson = async () => {
-//   const response = await axios.get(`https://swapi.info/api/people/1`);
-//   return response.data;
-// };//функція запиту
-
-// const fetchPerson = async (id: number) => {
-//   const response = await axios.get(`https://swapi.info/api/people/${id}`);
-//   return response.data;
-// };//функція запиту по id
+import css from "./App.module.css";
+import ReactPaginate from "react-paginate";
+import SearchBar from "../SearchBar/SearchBar";
+import ErrorMessage from "../ErrorMessage/ErrorMessage";
+import MovieGrid from "../MovieGrid/MovieGrid";
+import MovieModal from "../MovieModal/MovieModal";
+import Loader from "../Loader/Loader";
+import { useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import type { Movie } from "../../types/movie";
+import { fetchMovies } from "../../services/movieService";
 
 export default function App() {
-  // const [count, setCount] = useState(1);//стан для лічильника
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [movieQuery, setMovieQuery] = useState("");
 
-  // const myQuery = useQuery({
-  //   queryKey: ["myQueryKey"], //унікальний ключ запиту, який використовується для кешування та оновлення даних. Це може бути простий рядок, масив або об'єкт, який унікально ідентифікує запит.
-  //   queryFn: myQueryFunction, // асинхронна функція, що виконує запит до API або іншого джерела даних. Ця функція повинна повертати проміс із даними. Вона автоматично викликається для запиту.
-  // });
+  const { data, isLoading, isError, isSuccess } = useQuery({
+    queryKey: ["movies", movieQuery, currentPage],
+    queryFn: () => fetchMovies(movieQuery, currentPage),
+    enabled: movieQuery.trim().length > 0,
+    placeholderData: keepPreviousData,
+    retry: false,
+  });
 
-  //ПРИКЛАД USEQUERY
-  // const { data, error, isLoading, isError } = useQuery({
-  //   queryKey: ["person"],
-  //   queryFn: fetchPerson,
-  // });
+  const handleSearch = async (newQuery: string) => {
+    setMovieQuery(newQuery);
+    setCurrentPage(1);
+  };
 
-  //  const myQuery = useQuery({
-  //    queryKey: ["myKey"],
-  //    queryFn: myQueryFn,
-  //    enabled: false,/ enabled: characterId !== '', - запит буде виконуватись лише тоді коли користувач щось введе в поле пошуку
-  //  });//enabled: false - запит не виконується навіть якщо компоненти монтуються чи змінюються залежності
+  const movies = data?.results ?? [];
+  const totalPages = data?.total_pages ?? 0;
 
-  // const { data, error, isLoading, isError } = useQuery({
-  //   queryKey: ["person", count], // змінюємо ключ запиту залежно від count
-  // queryFn: () => fetchPerson(count),
-  // });//функція запиту, яка приймає count як параметр. Це дозволяє кожного разу запитувати нові дані для персонажа залежно від значення лічильника.
+  const openModal = (movie: Movie) => {
+    setSelectedMovie(movie);
+  };
+
+  const closeModal = () => {
+    setSelectedMovie(null);
+  };
 
   return (
     <div>
-      {/* <button onClick={() => setCount(count + 1)}>Get next character</button> */}
-      {/* {isLoading && <p>Loading...</p>}
-      {isError && <p>An error occurred: {error.message}</p>}
-      {data && <pre>{JSON.stringify(data, null, 2)}</pre>} */}
+      <SearchBar onSubmit={handleSearch} />
+      {isLoading && <Loader />}
+      {isError && <ErrorMessage />}
+      {isSuccess && (
+        <>
+          <MovieGrid onSelect={openModal} movies={movies} />
+          {totalPages > 1 && (
+            <ReactPaginate
+              pageCount={totalPages}
+              pageRangeDisplayed={5}
+              marginPagesDisplayed={1}
+              onPageChange={({ selected }) => setCurrentPage(selected + 1)}
+              forcePage={currentPage - 1}
+              containerClassName={css.pagination}
+              activeClassName={css.active}
+              nextLabel="→"
+              previousLabel="←"
+            />
+          )}
+        </>
+      )}
+      {selectedMovie && (
+        <MovieModal movie={selectedMovie} onClose={closeModal} />
+      )}
     </div>
   );
 }
-
-// Кожного разу, коли змінюється count, зміна ключа запиту гарантує, що запит буде повторно виконаний з новими даними. Цей запит виконується при монтуванні компонента і після кожного оновлення стану count.
