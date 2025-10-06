@@ -7,6 +7,7 @@ import MovieModal from "../MovieModal/MovieModal";
 import Loader from "../Loader/Loader";
 import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { Toaster } from "react-hot-toast";
 import type { Movie } from "../../types/movie";
 import { fetchMovies } from "../../services/movieService";
 
@@ -23,7 +24,7 @@ export default function App() {
     retry: false,
   });
 
-  const handleSearch = async (newQuery: string) => {
+  const handleSearch = (newQuery: string) => {
     setMovieQuery(newQuery);
     setCurrentPage(1);
   };
@@ -42,9 +43,10 @@ export default function App() {
   return (
     <div>
       <SearchBar onSubmit={handleSearch} />
+      <Toaster position="top-center" />
       {isLoading && <Loader />}
       {isError && <ErrorMessage />}
-      {isSuccess && (
+      {isSuccess && movies.length > 0 && (
         <>
           <MovieGrid onSelect={openModal} movies={movies} />
           {totalPages > 1 && (
