@@ -5,9 +5,9 @@ import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import MovieGrid from "../MovieGrid/MovieGrid";
 import MovieModal from "../MovieModal/MovieModal";
 import Loader from "../Loader/Loader";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import type { Movie } from "../../types/movie";
 import { fetchMovies } from "../../services/movieService";
 
@@ -23,6 +23,15 @@ export default function App() {
     placeholderData: keepPreviousData,
     retry: false,
   });
+
+  useEffect(() => {
+    if (isSuccess && data?.results.length === 0) {
+      toast.error("No movies found for your request.");
+      return;
+    }
+  }, [data, isSuccess]);
+
+  console.log(JSON.stringify(data));
 
   const handleSearch = (newQuery: string) => {
     setMovieQuery(newQuery);
